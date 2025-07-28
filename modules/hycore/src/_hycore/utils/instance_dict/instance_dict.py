@@ -5,7 +5,7 @@ from typing import Any
 from .events import GetEvent, SetEvent, DeleteEvent
 
 
-class InstanceDictItem:
+class InstanceMappingItem:
     _key: weakref.ReferenceType
 
     def __init__(self, key_instance, value, parent: 'InstanceMapping' = None):
@@ -51,12 +51,12 @@ class InstanceMapping[_KT, _VT](UserDict[_KT, _VT]):
     def to_key(self, value):
         return id(value)
 
-    def _get(self, key, item=False) -> InstanceDictItem:
+    def _get(self, key, item=False) -> InstanceMappingItem:
         i = super().__getitem__(key)
         return i if item else i.value
 
     def _set(self, key, value) -> None:
-        super().__setitem__(self.to_key(key), InstanceDictItem(key, value, self))
+        super().__setitem__(self.to_key(key), InstanceMappingItem(key, value, self))
 
     def _pop(self, key):
         return super().pop(key)
