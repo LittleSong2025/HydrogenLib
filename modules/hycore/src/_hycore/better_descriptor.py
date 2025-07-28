@@ -1,16 +1,16 @@
 from __future__ import annotations
 
+import typing
 from typing import Any
-
-from .utils.instance_dict.instance_dict import InstanceMapping
 
 
 class Descriptor:
-    __instance_mapping__: InstanceMapping = None
+    __instance_mapping__: 'InstanceMapping' = None
     __dspt_name__ = None
     __dspt_none_as_self__ = True
 
     def __init__(self):
+        from .utils.instance_dict import InstanceMapping
         if self.__instance_mapping__ is None:
             self.__instance_mapping__ = InstanceMapping()
 
@@ -125,3 +125,7 @@ class DescriptorInstance:
         """
         初始化描述符(需子类实现)。
         """
+
+
+if typing.TYPE_CHECKING:
+    from .utils.instance_dict import InstanceMapping
