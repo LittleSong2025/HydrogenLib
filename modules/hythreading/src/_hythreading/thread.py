@@ -1,18 +1,58 @@
 from threading import Thread as _Thread
+from weakref import WeakValueDictionary as weakdict
+from _hycore.typefunc import alias
+
+
+thread_mapping = weakdict()  # type: weakdict[int, 'HyThread']
+
+
+def register(thread):
+    thread_mapping[thread.ident] = thread
+
+
+def unregister(thread):
+    del thread_mapping[thread.ident]
+
+
+class ThreadWorker:
+    def run(self):
+        ...
+
+    def stop(self):
+        ...
+
+    def start(self):
+        ...
+
+
+class FuncWorker(ThreadWorker):
+    def __init__(self, func, args=(), kwargs=None):
+        kwargs = kwargs or {}
+
+        self._func, self._args, self._kwargs = func, args, kwargs
+
+    def run(self):
+        self._func(*self._args, **self._kwargs)
 
 
 class HyThread(_Thread):
-    def __init__(self, target=None, args=None, kwargs=None):
+    worker: ThreadWorker
+
+    worker = alias['_worker']
+
+    def __init__(self, worker):
         super().__init__()
-        self._target, self._args, self._kwargs = target, args, kwargs
+        self._worker = worker
 
-    def on_start(self):
-        ...
-
-    def on_exit(self):
-        ...
+    def start(self):
+        self._worker.start()
+        super().start()
+        register(self)
 
     def run(self):
-        self.on_start()
-        self._target(*self._args, **self._kwargs)
-        self.on_exit()
+        self._worker.run()
+        unregister(self)
+
+    def stop(self):
+        self._worker.stop()
+
