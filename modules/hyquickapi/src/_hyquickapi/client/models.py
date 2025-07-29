@@ -11,8 +11,8 @@ type RequestMethod = Literal['GET', 'POST', 'PUT', 'DELETE']
 
 @dc.dataclass
 class Request:
-    base_url: str | None
-    path: 'UrlPath'  # 当 path 为 dict 时, 表示填充路径模版
+    base_url: str | None = None
+    path: 'UrlPath' = dc.field(default_factory=UrlPath) # 当 path 为 dict 时, 表示填充路径模版
     query: dict = dc.field(default_factory=dict)  # 请求参数
     method: RequestMethod = 'GET'
     headers: dict[str, str] = dc.field(default_factory=dict)
