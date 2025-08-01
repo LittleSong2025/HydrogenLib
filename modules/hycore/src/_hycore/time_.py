@@ -117,3 +117,25 @@ class Stopwatch:
         self.elapsed_time = Time(self.end_time - self.start_time)
 
         return self.elapsed_time
+
+
+class IntervalRecorder:
+    def __init__(self):
+        self._last_time = None
+        self._running = False
+
+    def start(self):
+        self._last_time = time.time()
+        self._running = True
+
+    def record(self):
+        res = time.time() - self._last_time
+        self._last_time = time.time()
+        return res
+
+    def lap(self):
+        return time.time() - self._last_time
+
+    def stop(self):
+        self._running = False
+
