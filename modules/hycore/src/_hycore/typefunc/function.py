@@ -140,11 +140,13 @@ class FunctionGroup:
             return type(self)(self._funcs + other._funcs)
         elif isinstance(other, typing.Callable):
             return type(self)(self._funcs + [other])
+        return None
 
     def __iadd__(self, other):
         if isinstance(other, type(self)):
             self._funcs += other._funcs
             return self
+        return None
 
 
 def get_called_func(depth=1):
@@ -152,3 +154,33 @@ def get_called_func(depth=1):
     if not hasindex(call_stck, depth):
         return None
     return call_stck[depth].frame.f_code.co_qualname
+
+
+class _Oneshot:
+    """
+    This idea comes from《Oneshot》.
+    """
+    def __init__(self, func):
+        self._func = func
+        self._is_called = False
+
+    def __call__(self, *args, **kwargs):
+        if self._is_called:
+            raise RuntimeError('This function has been called.')
+        self._is_called = True
+        return self._func(*args, **kwargs)
+
+    def __get__(self, instance, owner):
+        return types.MethodType(self, instance)
+
+    def reset(self):
+        self._is_called = False
+
+
+def oneshot[T: 'typing.Callable'](func: T) -> T:
+    """
+    确保函数只执行一次, 多次执行会抛出错误
+    :param func: 函数
+    :return:
+    """
+    return _Oneshot(func)
