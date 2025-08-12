@@ -27,7 +27,7 @@ class alias:
         return cls(item)
 
     def __getitem__(self, item):
-        self.path += '.' + item
+        self.path = self.path.removesuffix('.') + '.' + str(item)
         return self
 
     def __call__(self, *, mode=None, classvar_enabled=None) -> Self:
@@ -58,3 +58,39 @@ class alias:
         if self.mode in {aliasmode.read_write, aliasmode.write}:
             delattr(instance, self.path)
         raise PermissionError("Can't delete alias")
+
+
+class rolling_back:
+    """
+    回滚属性
+
+    当访问的属性为 None 或发生错误时, 读取属性时将会返回回滚属性的值
+    """
+
+    def __init__(self, attr_path, *, rolling_backs: list[str] = None):
+        self.path = str(attr_path)
+        self.rolling_backs = rolling_backs or []
+
+    def iter_rolling_backs(self):
+        for r in self.rolling_backs:
+            yield getattr(self, r)
+
+    def __get__(self, instance, owner):
+        try:
+            value = getattr(instance, self.path)
+        except:
+            value = None
+
+        while value is None:
+            try:
+                value = next(self.iter_rolling_backs())
+            except:
+                pass
+
+        return value
+
+    def __set__(self, instance, value):
+        setattr(instance, self.path, value)
+
+    def __delete__(self, instance):
+        delattr(instance, self.path)
