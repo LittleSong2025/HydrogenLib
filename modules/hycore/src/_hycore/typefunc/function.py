@@ -156,31 +156,43 @@ def get_called_func(depth=1):
     return call_stck[depth].frame.f_code.co_qualname
 
 
-class _Oneshot:
+class _Oneshot[T]:
     """
     This idea comes from《Oneshot》.
     """
-    def __init__(self, func):
+
+    def __init__(self, func, num=1):
         self._func = func
-        self._is_called = False
+        self._call_num = 0
+        self._max_call_num = num
+
+    __call__: T
 
     def __call__(self, *args, **kwargs):
-        if self._is_called:
+        if self._call_num >= self._max_call_num:
             raise RuntimeError('This function has been called.')
-        self._is_called = True
+        self._call_num += 1
+
         return self._func(*args, **kwargs)
 
     def __get__(self, instance, owner):
         return types.MethodType(self, instance)
 
     def reset(self):
-        self._is_called = False
+        self._call_num = 0
+
+    def set_max_call_num(self, num: int):
+        self._max_call_num = num
 
 
-def oneshot[T: 'typing.Callable'](func: T) -> T:
+def oneshot[T: 'typing.Callable'](func: T | None = None, num=1) -> _Oneshot[T]:
     """
     确保函数只执行一次, 多次执行会抛出错误
     :param func: 函数
     :return:
     """
-    return _Oneshot(func)
+
+    def decorator(func):
+        return _Oneshot(func, num)
+
+    return decorator(func) if func else decorator
