@@ -11,11 +11,11 @@ from pathlib import Path
 from packaging.version import Version, InvalidVersion
 from rich import print
 
-RE_kwpair = re.compile(r"([\w_]+)=(.+)")
+kwpair_parser = re.compile(r"([\w_]+)=(.+)")
 
 
 def get_kwpair(string):
-    match = RE_kwpair.match(string)
+    match = kwpair_parser.match(string)
     if match:
         try:
             v = Version(match.group(2))
@@ -99,14 +99,14 @@ def build(module: Module, version=None):
             '--no-build-isolation'
         ],
         cwd=module.root, check=True,
-        stdout=sp.PIPE, stderr=sp.PIPE
+        # stdout=sp.PIPE, stderr=sp.PIPE
     )
 
 
 lock = threading.Lock()
 
 
-def build_main(module, versions):
+def main_build(module, versions):
     try:
         build(module, versions.get(module.name))
         print(f'[green]B[/green]uild module {module.name} successcls')
@@ -115,7 +115,7 @@ def build_main(module, versions):
         print(e.output)
 
 
-def publish_main(modules):
+def main_publish(modules):
     for module in modules:
         try:
             publish(module)
@@ -131,7 +131,7 @@ def main():
     versions = {}
     switches = set()
 
-    for arg in sys.argv[1::]:
+    for arg in sys.argv[1:]:
         if arg.startswith('-'):
             switches.add(arg)
         else:
@@ -149,13 +149,13 @@ def main():
         if '--only' in switches and module.name not in versions:
             continue
 
-        threadpool.submit(build_main, module, versions)
+        threadpool.submit(main_build, module, versions)
         modules.append(module)
 
     threadpool.shutdown()
 
     if '--publish' in switches:
-        publish_main(modules)
+        main_publish(modules)
 
 
 if __name__ == '__main__':
