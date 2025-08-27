@@ -7,7 +7,7 @@ from typing import Any
 class Descriptor:
     __instance_mapping__: 'InstanceMapping' = None
     __dspt_name__ = None
-    __dspt_none_as_self__ = True
+    __dspt_return_self__ = True
 
     def __init__(self):
         from .utils.instance_dict import InstanceMapping
@@ -61,7 +61,7 @@ class Descriptor:
         :param owner: 描述符所属的类。
         :return: 描述符的值。
         """
-        if instance is None and self.__dspt_none_as_self__:
+        if instance is None and self.__dspt_return_self__:
             return self
         else:
             return self.__dspt_get__(instance, owner)
@@ -125,6 +125,10 @@ class DescriptorInstance:
         """
         初始化描述符(需子类实现)。
         """
+
+
+def get_descriptor_instance(descriptor, instance, owner=None):
+    return descriptor.__instance__(instance, owner or type(instance))
 
 
 if typing.TYPE_CHECKING:
