@@ -5,31 +5,41 @@ from _hycore.utils import InstanceMapping
 type Validator = Callable[[Any], Any]
 
 
-class TypeRegistry:
+class TypeRegistry[_TS, _TT=_TS]:
     def __init__(self, mro=None):
-        self._mro = mro or InstanceMapping()  # type: InstanceMapping[type, InstanceMapping[type, Validator]]
+        self._mro = mro or InstanceMapping()  # type: InstanceMapping[type[_TS], InstanceMapping[type[_TT], Validator]]
 
-    def validate(self, data, target: type):
+    def validate(self, data: object, target: type[_TT]):
         sources = type(data).__mro__
         for source in sources:
             if self.exists(source, target):
                 return self.get(source, target)(data)
+        return None
 
-    def register(self, source: type, target: type, method: Validator):
+    def register(self, source: type[_TS], target: type[_TT], method: Validator):
         if source not in self._mro:
             self._mro[source] = InstanceMapping()
 
         self._mro[source][target] = method
 
-    def get(self, source: type, target: type):
+    def get(self, source: type[_TS], target: type[_TT]) -> Validator:
         if not self.exists(source, target):
             return None
         return self._mro[source][target]
 
-    def unregister(self, source: type, target: type):
+    def unregister(self, source: type[_TS], target: type[_TT]):
         if not self.exists(source, target):
             return
         del self._mro[source][target]
 
-    def exists(self, source: type, target: type):
+    def exists(self, source: type[_TS], target: type[_TT]):
         return source in self._mro and target in self._mro[source]
+
+    def __getitem__(self, item: tuple[type[_TS], type[_TT]]):
+        return self.get(*item)
+
+    def __setitem__(self, key: tuple[type[_TS], type[_TT]], value: Validator):
+        self.register(*key, value)
+
+    def __delitem__(self, key: tuple[type[_TS], type[_TT]]):
+        self.unregister(*key)
