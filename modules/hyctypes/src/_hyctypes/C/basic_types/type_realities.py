@@ -10,6 +10,15 @@ class SimpleCData(AbstractCData):
     def __init__(self, cdata):
         self.cdata = cdata
 
+    def __getattr__(self, item):
+        return getattr(self.cdata, item)
+
+    def __setattr__(self, key, value):
+        if key == 'cdata':
+            super().__setattr__(self, key, value)
+        else:
+            setattr(self.cdata, key, value)
+
 
 class SimpleCType(AbstractCType, real=SimpleCData):
     rc = alias['__real_ctype__'](mode=alias.mode.read_write)

@@ -69,7 +69,7 @@ class AbstractCType:
 
     如果不重写 __call__ 方法,那么默认返回 __real_type__(*args, **kwargs)
     """
-    __real_type__: type = None
+    __real_type__: type[AbstractCData | object] = None
     __real_ctype__: type = None
 
     def __init_subclass__(cls, **kwargs):
@@ -165,7 +165,7 @@ def as_functype(obj, prototype):
     return prototype(as_cdata(obj))
 
 
-def get_real_type(ctype):
+def get_real_type(ctype) -> type[AbstractCData]:
     if isinstance(ctype, AbstractCType):
         return ctype.__real_type__
     else:

@@ -1,10 +1,11 @@
 import ctypes
 import os
 import platform
+from typing import overload
 
 from _hycore import typefunc
 from .basic_types import CallingConvention as CV
-from .c_types import Function, ProtoType
+from .c_types import Function, ProtoType, Pointer
 
 
 class Dll:
@@ -28,7 +29,7 @@ class Dll:
                 match platform.system():
                     case "Windows":
                         self._dll = ctypes.WinDLL(self._name)
-                    case x  if x in {'Linux', 'Darwin'}:
+                    case x if x in {'Linux', 'Darwin'}:
                         self._dll = ctypes.CDLL(self._name)
                     case _:
                         raise Exception("Unsupported OS")
@@ -48,6 +49,11 @@ class Dll:
     def ready(self):
         return self._dll is not None
 
+    @overload
+    def addr(self, name: str) -> Pointer: ...
+    @overload
+    def addr(self, index: int) -> Pointer: ...
+
     def addr(self, name_or_index: str | int):
         if isinstance(name_or_index, str):
             ptr = getattr(self._dll, name_or_index)
@@ -56,18 +62,17 @@ class Dll:
         else:
             raise TypeError("Unsupported type")
 
-        return ptr
-
+        return Pointer(ptr)
     def attr(self, name: str, type):
         return self.addr(name).cast(type)
 
     def __getattr__(self, name):
         return self.addr(name)
 
-    def __call__(self, maybe_func=None, *, name: str = None):
+    def __call__(self, maybe_func=None, *, name: str = None, cv=CV.auto):
         def decorator(func):
-            prototype = ProtoType.define(name=name)(func)
-            func = Function(self.addr(prototype.name), prototype, prototype.signature)
+            prototype = ProtoType.define(name=name, cv=cv)(func)
+            func = Function(self.addr(prototype.name).ptr, prototype, prototype.signature)
             return func
 
         return decorator(maybe_func) if maybe_func else decorator

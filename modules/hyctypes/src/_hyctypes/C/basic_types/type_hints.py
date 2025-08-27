@@ -15,8 +15,8 @@ type ulong = int
 type ulonglong = int
 type double = float
 type longdouble = float
-type char = int  # uint8_t
-type wchar = int  # uint16_t
+type char = int | bytes  # uint8_t  也可以看做单字符的 string
+type wchar = int | str # uint16_t
 # type char_p = bytes | None
 # type wchar_p = str | None
 # char_p 和 wchar_p 不需要另外表示

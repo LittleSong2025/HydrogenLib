@@ -1,12 +1,12 @@
 from inspect import Signature, get_annotations
-
 from _hycore.typefunc import get_type_name, get_name, get_signature
-from .base import CallingConvention as CV, pointer
+from _hycore.utils import lazy_property
 from .impls import *
 from ..methods import get_types_from_signature
+from .base import CallingConvention as CV
 
 
-class PointerType(AbstractCType, real=Pointer):
+class TPointer(AbstractCType, real=Pointer):
     def __init__(self, tp):
         """
 
@@ -33,7 +33,7 @@ class PointerType(AbstractCType, real=Pointer):
         return self._convert_mro.get(tp, self._convert_obj)(self, obj)
 
 
-class ArrayType(AbstractCType, real=Array):
+class TArray(AbstractCType, real=Array):
     def __init__(self, tp, length=1):
         """
 
@@ -54,14 +54,13 @@ class ArrayType(AbstractCType, real=Array):
             obj = tuple(obj)  # 先转换成开销小的元组类型
             length = len(obj)
             if length != self.length:
-                # 将 obj 转换成 Array 时发生错误: 长度不匹配
                 raise TypeError(f'Convert to Array failed: Length mismatch (except {self.length}, got {length})')
             return Array(self.__real_ctype__(*(as_cdata(x) for x in obj)))
         else:
             raise TypeError(f'Convert to Array failed: {obj} is not iterable')
 
 
-class RefType(AbstractCType, real=Ref):
+class TRef(AbstractCType, real=Ref):
     __real_ctype__ = ctypes.c_void_p
 
     def __init__(self, tp):
@@ -77,7 +76,7 @@ class RefType(AbstractCType, real=Ref):
         return Ref(obj)
 
 
-class AnonymousType(AbstractCType, real=object):
+class TAnonymous(AbstractCType, real=object):
     def __init__(self, tp):
         self.__real_ctype__ = self.__real_type__ = tp
 
@@ -95,7 +94,7 @@ class _This:
 This = _This()
 
 
-class StructureType(AbstractCType, real=Structure):
+class TStructure(AbstractCType, real=Structure):
     __struct_base__ = None
 
     @staticmethod
@@ -130,7 +129,7 @@ class StructureType(AbstractCType, real=Structure):
         final_fields = []
         final_anonymous = set(anonymous or ())
         for name, typ in fields:
-            if isinstance(typ, AnonymousType):
+            if isinstance(typ, TAnonymous):
                 final_anonymous.add(name)
 
             final_fields.append((name, as_ctype(typ)))
@@ -166,12 +165,12 @@ class StructureType(AbstractCType, real=Structure):
             return decorator(maybe_cls)
 
 
-class UnionType(StructureType, real=Structure):  # 万能的 Structure!!!
+class TUnion(TStructure, real=Structure):  # 万能的 Structure!!!
     __struct_base__ = ctypes.Union
 
 
 class ProtoType(AbstractCType, real=Function):
-    @LazyProperty
+    @lazy_property
     def c_argtypes(self):
         return tuple(map(as_ctype, self.argtypes))
 
@@ -182,7 +181,7 @@ class ProtoType(AbstractCType, real=Function):
         self.signature = signature
         self.name = name
 
-    def bind(self, dll, name=None):
+    def bind(self, dll, name=None) -> Function:
         if dll.calling_convention != self.cv:
             raise TypeError(f"Calling convention mismatch: {dll.calling_convention} != {self.cv}")
         return Function(dll.addr(name or self.name), self, self.signature)
@@ -208,7 +207,7 @@ class ProtoType(AbstractCType, real=Function):
         else:
             return decorator(maybe_func)
 
-    @LazyProperty
+    @lazy_property
     def __real_ctype__(self):
         return self.cv.functype(self.restype, *self.c_argtypes)
 

@@ -25,6 +25,7 @@ class CallingConvention(int, Enum):
 
 
 CV = CallingConvention
+
 if platform.system() == 'Windows':
     CV.auto = CV.stdcall
 

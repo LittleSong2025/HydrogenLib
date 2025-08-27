@@ -19,12 +19,12 @@ from .C.dll import Dll
 from .C.c_types import *
 
 from .C.compound_types import (
-    PointerType as Pointer,
-    RefType as Ref,
-    ArrayType as Array,
-    StructureType as Structure,
+    TPointer as Pointer,
+    TRef as Ref,
+    TArray as Array,
+    TStructure as Structure,
     Structure as StructureBase,
-    UnionType as Union
+    TUnion as Union
 )
 
 

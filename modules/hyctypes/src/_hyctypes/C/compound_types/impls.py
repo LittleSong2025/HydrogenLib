@@ -48,8 +48,8 @@ class Pointer[T](AbstractCData):
         return self.ptr[item]
 
     def __convert_ctype__(self, target):
-        from .type_realities import PointerType, RefType
-        if not isinstance(target, (PointerType, RefType)):
+        from .type_realities import TPointer, TRef
+        if not isinstance(target, (TPointer, TRef)):
             raise TypeError(f'{Pointer} cannot be assigned to {target}')
 
         return cast(self, as_ctype(target))
@@ -153,11 +153,11 @@ class Structure(AbstractCData):
             setattr(self.__cdata__, name, value)
 
     def __convert_ctype__(self, target):
-        from .type_realities import PointerType, RefType
+        from .type_realities import TPointer, TRef
 
-        if isinstance(target, PointerType):
+        if isinstance(target, TPointer):
             return Pointer(pointer(self))
-        elif isinstance(target, RefType):
+        elif isinstance(target, TRef):
             return Ref(self)
         else:
             raise NotImplementedError
@@ -187,7 +187,7 @@ class WrapedArguments:
         return func(*self.args, **self.kwargs)
 
 
-class Function:
+class Function[*Targs, Tret]:
     _methods = InstanceMapping()
 
     _restype = alias['_prototype']['restype']
@@ -210,12 +210,12 @@ class Function:
             return_annotation=self._prototype.restype
         )
 
-    def __init__(self, ptr, prototype: 'ProtoType' = None, signature: Signature = None):
+    def __init__(self, ptr, prototype: 'ProtoType' = None, signature: Signature = None, func=None):
         self._ptr = ptr
         self._prototype = prototype
         self._signature_ = signature
 
-        self._ptr.restype = as_ctype(self._restype)  # 只设置 restype, argtypes 不由 ctypes 检查
+        self._func = func
 
     # @classmethod
     # def wrap(cls, maybe_func=None, *, name: str = None, dll=None, real_prototype=None):
@@ -246,7 +246,17 @@ class Function:
             except TypeError as e:
                 raise TypeError(str(e))
 
+    __call__: typing.Callable[[*Targs], Tret]
     def __call__(self, *args, **kwargs):
+        # 首先 调用原函数
+        new_args = self._func(*args, **kwargs) if self._func else None
+
+        if new_args is not None:
+            args = (
+                *new_args,
+                *args[len(new_args):]
+            )
+
         res = self._ptr(*self.convert_args(args, kwargs))  # 不要用 kwargs
         # 现在, 我们需要对返回值二次转换
         # ctypes 的调用不会返回 hyctypes 中的类型
