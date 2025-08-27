@@ -11,9 +11,12 @@ class TypeRegistry[_TS, _TT=_TS]:
 
     def validate(self, data: object, target: type[_TT]):
         sources = type(data).__mro__
+        targets = target.__mro__
         for source in sources:
-            if self.exists(source, target):
-                return self.get(source, target)(data)
+            for target in targets:
+                mapping = self._mro[source]
+                if target in mapping:
+                    return mapping[target](data)
         raise TypeError(f'{type(data)} cannot be cast to {target}')
 
     def register(self, source: type[_TS], target: type[_TT], method: Validator):
