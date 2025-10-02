@@ -45,7 +45,10 @@ FunctionTypes = types.FunctionType, types.MethodType, types.BuiltinFunctionType,
 
 
 def is_function(obj):
-    return isinstance(obj, FunctionTypes)
+    return inspect.isfunction(obj)
+
+def is_method(obj):
+    return inspect.ismethod(obj)
 
 
 def get_signature(func):
