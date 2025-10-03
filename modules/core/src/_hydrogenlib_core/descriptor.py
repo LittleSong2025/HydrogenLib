@@ -14,6 +14,13 @@ class Descriptor:
         if self.__instance_mapping__ is None:
             self.__instance_mapping__ = InstanceMapping()
 
+    def __init_subclass__(cls, **kwargs):
+        if instance_class := getattr(cls, 'Instance', None):
+            def new(self, inst):
+                return instance_class()
+
+            cls.__dspt_new__ = new
+
     def __instance__(self, inst, owner):
         if inst not in self.__instance_mapping__:
             self.__instance_mapping__[inst] = x = self.__dspt_new__(inst)
