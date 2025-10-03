@@ -3,7 +3,7 @@ from weakref import WeakValueDictionary as weakdict
 from _hydrogenlib_core.typefunc import alias
 
 
-thread_mapping = weakdict()  # type: weakdict[int, 'HyThread']
+thread_mapping = weakdict()  # type: weakdict[int, 'Thread']
 
 
 def register(thread):
@@ -35,7 +35,7 @@ class FuncWorker(ThreadWorker):
         self._func(*self._args, **self._kwargs)
 
 
-class HyThread(_Thread):
+class Thread(_Thread):
     worker: ThreadWorker
 
     worker = alias['_worker']

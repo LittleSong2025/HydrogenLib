@@ -33,21 +33,17 @@ def run_with_timeout(func, timeout, *args, **kwargs):
     def target():
         try:
             res = func(*args, **kwargs)
+            queue.put((res, None))
         except Exception as e:
-            res = e
-
-        queue.put(res)
+            queue.put((None, e))
 
     thread = run_new_thread(target)
-    try:
-        thread.join(timeout)
-    except RuntimeError as e:
-        raise e
+    thread.join(timeout)
 
-    result = queue.get()
+    result, error = queue.get()
+    if error is not None:
+        raise error
 
-    if isinstance(result, Exception):
-        raise result
     return result
 
 
