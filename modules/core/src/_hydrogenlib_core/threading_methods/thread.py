@@ -35,18 +35,29 @@ class FuncWorker(ThreadWorker):
         self._func(*self._args, **self._kwargs)
 
 
-class Thread(_Thread):
+class Thread:
     worker: ThreadWorker
 
-    worker = alias['_worker']
+    ident: int = alias['ident']
+
+    @property
+    def worker(self):
+        return self._worker
+
+    @worker.setter
+    def worker(self, v):
+        if self.lived:
+            raise RuntimeError('Thread is still running')
+        self._worker = v
 
     def __init__(self, worker):
-        super().__init__()
+        self._thread = None
         self._worker = worker
 
     def start(self):
         self._worker.start()
-        super().start()
+        self._thread = _Thread(target=self.run)
+        self._thread.start()
         register(self)
 
     def run(self):
@@ -55,4 +66,12 @@ class Thread(_Thread):
 
     def stop(self):
         self._worker.stop()
+        self._thread = None
+
+    def join(self, timeout=None):
+        self._thread.join(timeout)
+
+    @property
+    def lived(self):
+        return self._thread.is_alive()
 
