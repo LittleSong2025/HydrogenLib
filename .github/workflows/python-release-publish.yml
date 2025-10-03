@@ -20,7 +20,7 @@ jobs:
           pip install uv hatch packaging
 
       - name: Build and Publish
-        run: |
+        run: |  # 这里调用脚本, 上传到 pypi
           python ./scripts/ci_publish.py
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name }}
