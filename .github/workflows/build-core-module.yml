@@ -1,0 +1,120 @@
+name: Build Core Module
+
+on:
+  push:
+    branches:
+      - release/core-module-*
+  workflow_dispatch:
+
+jobs:
+  build-core-module:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12.4'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install hatch
+
+      - name: Build core module
+        run: |
+          # Create a temporary directory for the core module
+          mkdir -p temp_core_module/src/hydrogenlib
+          
+          # Copy core module files
+          cp -r src/hydrogenlib/_hycore temp_core_module/src/hydrogenlib/
+          cp -r src/hydrogenlib/_hyctypes temp_core_module/src/hydrogenlib/
+          cp -r src/hydrogenlib/_hynet_structure temp_core_module/src/hydrogenlib/
+          cp src/hydrogenlib/hycore.py temp_core_module/src/hydrogenlib/
+          cp src/hydrogenlib/hyctypes.py temp_core_module/src/hydrogenlib/
+          cp src/hydrogenlib/hynet_structure.py temp_core_module/src/hydrogenlib/
+          cp src/hydrogenlib/__init__.py temp_core_module/src/hydrogenlib/
+          cp src/hydrogenlib/__about__.py temp_core_module/src/hydrogenlib/
+          
+          # Create pyproject.toml for core module
+          cat > temp_core_module/pyproject.toml << 'EOF'
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "HydrogenLib-Core"
+dynamic = ["version"]
+description = 'Core module of HydrogenLib'
+readme = "README.md"
+requires-python = ">=3.7.0"
+keywords = []
+authors = [
+    { name = "LittleSong2024", email = "LittleSong2024@outlook.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+dependencies = [
+    "jsonpickle >= 3.3.0",
+    "pyaes >= 1.6.0",
+    "rsa >= 4.9",
+    "psutil >= 6.0.0",
+    "rich >= 13.6.0",
+    "ping3 >= 4.0.0",
+    "bitarray",
+    "natsort",
+]
+
+[project.urls]
+Documentation = "https://github.com/LittleSong2024/HydrogenLib#readme"
+Issues = "https://github.com/LittleSong2024/HydrogenLib/issues"
+Source = "https://github.com/LittleSong2024/HydrogenLib"
+
+[tool.hatch.version]
+path = "src/hydrogenlib/__about__.py"
+
+[tool.hatch.build]
+target = "wheel"
+
+[tool.hatch.build.targets.wheel]
+packages = ['src/hydrogenlib']
+EOF
+          
+          # Create README.md for core module
+          cat > temp_core_module/README.md << 'EOF'
+# HydrogenLib Core Module
+
+This is the core module of HydrogenLib, containing essential components for basic operations.
+
+## Included Modules
+
+- `_hycore`: Core functionality
+- `_hyctypes`: C types support
+- `_hynet_structure`: Network structure utilities
+- `hycore.py`: Core module interface
+- `hyctypes.py`: C types interface
+- `hynet_structure.py`: Network structure interface
+
+EOF
+          
+          # Build the core module
+          cd temp_core_module
+          hatch build
+          
+          # Upload artifacts
+          cd ..
+          mkdir -p artifacts
+          cp temp_core_module/dist/* artifacts/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: core-module
+          path: artifacts/*
