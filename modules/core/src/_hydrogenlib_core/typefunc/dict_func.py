@@ -1,21 +1,7 @@
-def get_pairs_by_value(dic, value, reverse=False):
-    """
-    通过值获取所以符合的键值对，结果以字符排序（默认升序），可以通过reverse参数控制
-
-    :param dic: a dict type object
-    :param value: a value of dict
-    :param reverse: 控制升序降序，对于sort/sorted中的reverse参数
-    """
-    pairs = [(k, v) for k, v in dic._instances() if v == value]
-    return sorted(pairs, key=lambda x: x[0], reverse=reverse)
+from typing import MutableMapping
 
 
-def update(dic, **kwd):
-    dic.update(**kwd)
-    return dic
-
-
-class AttrDict:
+class ObjectiveDict:
     def __init__(self, **kwargs):
         object.__setattr__(self, "_dict", kwargs)
 
@@ -45,3 +31,34 @@ def build_from_tuple(tuple, *keys):
 # 字典解包
 def unpack_to_tuple(dct, *keys):
     return (dct[k] for k in keys)
+
+
+class SubDict(MutableMapping):
+    def __getitem__(self, item):
+        try:
+            return self._data[item]
+        except KeyError:
+            return self._par[item]
+
+    def __setitem__(self, key, value, /):
+        self._data[key] = value
+
+    def __delitem__(self, key, /):
+        try:
+            del self._data[key]
+        except KeyError:
+            self._keys.remove(key)
+
+    def __len__(self):
+        return len(set(self._data.keys()) | self._keys)
+
+    def __iter__(self):
+        return iter(
+            set(self._data.keys()) | self._keys
+        )
+
+    def __init__(self, parent, keys):
+        self._par = parent
+        self._keys = set(keys)
+        self._data = {}
+
