@@ -59,8 +59,9 @@ def iter_attributes(obj):
 
 class AutoSlotsMeta(type):
     __slots__: tuple
+
     def __new__(cls, name, bases, attrs):
-        attrs["__slots__"] = tuple(attrs['__annotations__'].keys())
+        attrs["__slots__"] = tuple(attrs.get('__annotations__', {}).keys())
         return super().__new__(cls, name, bases, attrs)
 
 
