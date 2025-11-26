@@ -38,7 +38,7 @@ packages = ["src/{package_name}"]
 name_matcher = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
 
 if __name__ == '__main__':
-    name = sys.argv[1]
+    name = '-'.join(sys.argv[1:])
     cwd = Path.cwd()
     modules = cwd / 'modules'
 
@@ -55,8 +55,8 @@ if __name__ == '__main__':
     create_dir_by_struct(new_project_dir, {
             'src': {
                 full_pkgname: {
-                    '__init__.py',
-                    '__about__.py'
+                    '__init__.py': None,
+                    '__about__.py': 'version = "0.0.1" '
                 }
             },
             'README.md': None,
