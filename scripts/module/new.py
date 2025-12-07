@@ -2,7 +2,7 @@ import re
 import sys
 from pathlib import Path
 
-from scripts.base import create_dir_by_struct, convert_to_package_name, convert_to_module_name
+from scripts.base import create_dir_by_struct, convert_to_package_name, convert_to_module_name, find_project_dir
 
 template = """
 [build-system]
@@ -39,11 +39,9 @@ name_matcher = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
 
 if __name__ == '__main__':
     name = '-'.join(sys.argv[1:])
-    cwd = Path.cwd()
-    while cwd.name != 'HydrogenLib':
-        cwd = cwd.parent
+    project_dir = find_project_dir()
 
-    modules = cwd / 'modules'
+    modules = project_dir / 'modules'
 
     # Check the name
     if not name_matcher.match(name):

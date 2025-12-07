@@ -1,6 +1,5 @@
 from collections import deque
 from pathlib import Path
-import tomlkit
 
 
 # def reset_toml_infomation(file, m: Path):
@@ -92,3 +91,12 @@ def convert_to_module_name(name: str):
         name = "HydrogenLib-" + name
 
     return name.title()
+
+
+def find_project_dir(start_dir: Path | None = None) -> Path:
+    start_dir = start_dir or Path.cwd()
+
+    while start_dir.name != 'HydrogenLib':
+        start_dir = start_dir.parent
+
+    return start_dir
