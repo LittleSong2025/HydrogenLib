@@ -44,14 +44,14 @@ default = true
 
 [dependency-groups]
 dev = [
-    "aiohttp>=3.12.15",
-    "curl-cffi>=0.13.0",
-    "hatch>=1.16.2",
-    "hatchling>=1.27.0",
-    "httpx>=0.28.1",
+    "aiohttp",
+    "curl-cffi",
+    "hatch",
+    "hatchling",
+    "httpx",
     "packaging>=25.0",
     "pydantic",
-    "tomlkit>=0.13.3",
+    "tomlkit",
     "urllib3",
     "uv",
 ]
