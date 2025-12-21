@@ -43,7 +43,7 @@ class _CacheFiles:
 
 
 class CacheDirectory:
-    def __init__(self, tempdir, indexdir=None, filedir=None, local_index_hashmethod='sha256'):
+    def __init__(self, tempdir, indexdir=None, filedir=None, index_hash_method='sha256'):
         self.tempdir = Path(tempdir)
         self.indexdir = indexdir or self.tempdir / 'index'
         self.filedir = filedir or tempdir / 'files'
@@ -52,15 +52,15 @@ class CacheDirectory:
         self.indexdir.mkdir(parents=True, exist_ok=True)
         self.filedir.mkdir(parents=True, exist_ok=True)
 
-        self._lihm = local_index_hashmethod
-        self._lihf = get_hash_func_by_method(local_index_hashmethod)
+        self._lihm = index_hash_method
+        self._lihf = get_hash_func_by_method(index_hash_method)
 
     @property
-    def local_index_hash_method(self):
+    def index_hash_method(self):
         return self._lihm
 
-    @local_index_hash_method.setter
-    def local_index_hash_method(self, value):
+    @index_hash_method.setter
+    def index_hash_method(self, value):
         if value == self._lihm:
             return
 
@@ -71,3 +71,5 @@ class CacheDirectory:
         return self._lihf(string)
 
     def get_cache_info(self, url):
+        hash_v = self.calc_hash(url)
+

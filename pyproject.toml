@@ -30,7 +30,7 @@ Source = "https://github.com/LittleSong2024/HydrogenLib"
 path = "hydrogenlib/__init__.py"
 
 [[tool.uv.index]]
-url = "http://mirrors.aliyun.com/pypi/simple"
+url = "https://mirrors.aliyun.com/pypi/simple"
 default = true
 
 [dependency-groups]

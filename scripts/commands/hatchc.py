@@ -9,11 +9,11 @@ def hatch(commands, cwd=None):
     )
 
 
-def set_version(moudle_dir, ver):
+def set_version(module_dir, ver):
     ver = str(ver)
-    return hatch(['version', ver], cwd=moudle_dir)
+    return hatch(['version', ver], cwd=module_dir)
 
 
-def get_version(moudle_dir):
-    orginal_ver = hatch(['version'], cwd=moudle_dir).stdout.decode("utf-8").splitlines()[-1].strip()
+def get_version(module_dir):
+    orginal_ver = hatch(['version'], cwd=module_dir).stdout.decode("utf-8").splitlines()[-1].strip()
     return packaging.version.Version(orginal_ver)
