@@ -8,15 +8,24 @@ dynamic = ["version"]
 requires-python = ">=3.12"
 keywords = []
 authors = [
-  { name = "LittleSong2025", email = "LittleSong2024@outlook.com" },
+    { name = "LittleSong2025", email = "LittleSong2024@outlook.com" },
 ]
-classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12", "Programming Language :: Python :: 3.13", "Programming Language :: Python :: Implementation :: CPython", "Programming Language :: Python :: Implementation :: PyPy"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: Implementation :: PyPy"
+]
 dependencies = [
     "hydrogenlib-core",
-#    "hydrogenlib-tools",
-#    "hydrogenlib-ctypes",
-#    "hydrogenlib-quickapi",
-#    "hydrogenlib-resource-system"
+    #    "hydrogenlib-tools",
+    #    "hydrogenlib-ctypes",
+    #    "hydrogenlib-quickapi",
+    #    "hydrogenlib-resource-system"
 ]
 
 import-names = ["hydrogenlib"]
