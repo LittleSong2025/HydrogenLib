@@ -25,4 +25,4 @@ project_infomation = {
 large_int = int(1e100)
 small_int = int(-1e100)
 
-long_string = binary_data.decode() * large_int
+long_string = "0123456789" * 1000000
