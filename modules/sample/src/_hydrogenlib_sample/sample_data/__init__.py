@@ -1,14 +1,14 @@
-DATABASE_NAME = "SzQlib.db"
-ENTRYPT_KEY = B"\x00\x02\xf3\x94\x98\x03\x99\xff\x00\x02\xf3\x94\x98\x03\x99\xff"
-STRUCT_SAMPLE = {
-    "name": "SzQlib",
+binary_data = B"\x00\x02\xf3\x94\x98\x03\x99\xff\x00\x02\xf3\x94\x98\x03\x99\xff"
+project_infomation = {
+    "name": "HydrogenLib",
+    "type": "Library",
     "version": "1.0.0",
-    "author": "SzQ",
+    "author": "LittleNightSong",
     "description": "A library for Python",
     "license": "MIT",
     "url": "",
     "email": "",
-    "keywords": ["SzQlib", "SzQ", "Python"],
+    "keywords": ["HydrogenLib", "Simple", "Python", "In-developed"],
     "classifiers": [
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -21,3 +21,8 @@ STRUCT_SAMPLE = {
         "Programming Language :: Python :: 3.10",
     ]
 }
+
+large_int = int(1e100)
+small_int = int(-1e100)
+
+long_string = binary_data.decode() * large_int
