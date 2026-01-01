@@ -1,7 +1,3 @@
-<div align="center">
-    <img src="src/image/HydroLib-LOGO-SVG.svg" alt="HydrogenLib Logo" height="300">
-</div>
-
 <h1 align="center">HydrogenLib</h1>
 
 <div align="center">
@@ -34,11 +30,3 @@
 ## 许可证
 
 项目使用[`HydrogenLib License`](License.md)许可证.
-
-## 致谢
-
- - [`Python`](https://www.python.org/) 项目的根基！
- - [`rich`](https://github.com/Textualize/rich) 作为一个输出美化库,为我们的调试和输出提供了许多帮助。
- - [`psuitl`](https://pypi.org/project/psutil) 功能强大的进程管理库，也是系统操作库）
-
-此外,提名或未提名的开源模块,我们都一并表示由衷的感谢。
