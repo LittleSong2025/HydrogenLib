@@ -1,89 +1,130 @@
+import contextlib
 import os
-from typing import Union, Any, Callable, Iterable
-from functools import lru_cache
+from typing import Callable, Any, MutableMapping
 
-from contextlib import contextmanager
+list_sep = ';' if os.name == 'nt' else ':'
 
-from .typefunc import get_type_name
-
-os_envsep = ':'
-
-if os.name == 'nt':
-    os_envsep = ';'
+type EnvironType = MutableMapping[str, str]
+type TypeCallable[P=Any, R=Any] = Callable[[P], R]
 
 
-class EnvironmentVariable:
-    def __init__(self, name, value, sep=os_envsep, on_change: Callable[[Any, Any], None] = None):
-        self._name = name
-        self._value = value
-        self._ls = None
-        self._sep = sep
-        self._on_change = on_change
-
-    @property
-    def value(self):
-        return self._value
-
-    @value.setter
-    def value(self, v: str | Iterable):
-        old = self.value
-        if not isinstance(v, str):
-            v = self._sep.join(map(str, v))
-
-        self._value = v
-
-        if self._on_change:
-            self._on_change(old, v)
-
-        self._ls = None
-
-    def list(self, sep=os_envsep):
-        if self._ls is None:
-            self._ls = self.value.split(sep=sep)
-        return self._ls
+def pathlist(path_string: str):
+    return path_string.split(list_sep)
 
 
-class Environment:
-    def __init__(self, dct=None, sep=os_envsep):
-        self._environ = dct or os.environ
+class Environ:
+    def __init__(self, environ: EnvironType):
+        self.environ = environ
 
-        self.sep = sep
+    def get(self, key: str, default: Any = None):
+        return self.environ.get(key, default)
 
-    def set(self, name, value: str | Iterable, sep=os_envsep):
-        if isinstance(value, str):
-            self._environ[name] = value
-        else:
-            self._environ[name] = sep.join(map(str, value))
+    def parsed(self, key: str, type: TypeCallable[str, Any]):
+        return type(self[key])
 
-    def get(self, name):
-        return EnvironmentVariable(name, self._environ[name], self.sep, lambda old, new: self.set(name, new))
+    def to_dict(self):
+        return dict(self.environ)
 
-    def get_copy(self, name):
-        return EnvironmentVariable(name, self._environ, self.sep)
+    def update(self, m=None, **kwargs):
+        self.environ.update(m, **kwargs)
 
-    def keys(self):
-        return self._environ.keys()
+    def copy(self):
+        return dict(self.environ)
 
     def __getitem__(self, item):
-        return self._environ[item]
+        return self.environ[item]
+
+    def __setitem__(self, key, value):
+        self.environ[key] = value
+
+    def __delitem__(self, key):
+        del self.environ[key]
+
+    def __contains__(self, item):
+        return item in self.environ
+
+    def __iter__(self):
+        return self.environ.__iter__()
 
 
-def update_environ(env: Environment):
-    os.environ.update(dict(env))
+class EnvironVar[T, DT]:
+    def __init__(self, environ: Environ, name: str, default: DT = None, type: TypeCallable[str, T] = None):
+        self.environ = environ
+        self.name = name
+        self.default = default
+        self.type = type
+
+    def check_name(self):
+        if self.name is None:
+            raise RuntimeError('No environ name')
+
+    def get(self) -> T | DT:
+        self.check_name()
+        if self.name not in self.environ:
+            return self.default
+
+        else:
+            value = self.environ[self.name]
+            return self.type(value) if self.type else value
+
+    def set(self, value: str):
+        self.check_name()
+        self.environ[self.name] = value
+
+    def delete(self):
+        self.check_name()
+        if self.name in self.environ:
+            del self.environ[self.name]
 
 
-def clear_environ():
+class environ_property[T]:
+    def __init__(self, environ: Environ, name: str = None, default: Any = None, type: TypeCallable[str, T] = None,
+                 set_convertor: Callable[[Any], str] = None):
+        self.var = EnvironVar(environ, name, default, type)
+        self.set_convertor = set_convertor or (lambda value: value)
+
+    def __set_name__(self, owner, name):
+        self.var.name = name
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
+        return self.var.get()
+
+    def __set__(self, instance, value):
+        return self.var.set(
+            self.set_convertor(value)
+        )
+
+    def __delete__(self, instance):
+        self.var.delete()
+
+
+environ = Environ(dict(os.environ))
+
+
+def update_environ(environ):
+    os.environ.update(environ)
+
+
+def reset_environ(environ):
     os.environ.clear()
+    os.environ.update(environ)
 
 
-def set_environ(env: Environment):
-    clear_environ()
-    update_environ(env)
+@contextlib.contextmanager
+def with_environ(environ: EnvironType | Environ):
+    """
+    环境变量上下文管理器
 
+    :param environ: 过程中保持的环境变量
+    :return:
+    """
+    if not isinstance(environ, Environ):
+        environ = Environ(environ)
 
-@contextmanager
-def environ(env: Environment):
-    old_env = Environment()
-    update_environ(env)
-    yield
-    update_environ(old_env)
+    environ_backup = os.environ.copy()
+    reset_environ(environ)
+    yield environ
+    reset_environ(environ_backup)
