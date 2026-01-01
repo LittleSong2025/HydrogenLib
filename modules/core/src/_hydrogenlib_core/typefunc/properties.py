@@ -1,6 +1,7 @@
-from . import get_attr_by_path as getattr, set_attr_by_path as setattr, del_attr_by_path as delattr
 import enum as _enum
-from typing import Callable, Any, Self
+from typing import Self
+
+from . import get_attr_by_path as getattr, set_attr_by_path as setattr, del_attr_by_path as delattr
 
 
 class aliasmode(int, _enum.Enum):
