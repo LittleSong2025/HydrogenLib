@@ -37,7 +37,7 @@ packages = ["src/{package_name}"]
 name_matcher = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*")
 
 if __name__ == '__main__':
-    name = '-'.join(sys.argv[1:])
+    name = '-'.join(sys.argv[1:]).lower()
     project = Project()
 
     # Check the name
