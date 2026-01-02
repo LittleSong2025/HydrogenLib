@@ -48,10 +48,10 @@ class Project:
         return cls(project_dir)
 
     def get_module(self, name: str, check=True):
-        module_dir = (self.path / name)
+        module_dir = (self.path / 'modules' / name)
 
         if check:
-            self.is_module(name)
+            self.check_module(name)
 
         return Module(module_dir)
 
@@ -60,11 +60,17 @@ class Project:
             if module_dir.is_dir():
                 yield Module(module_dir)
 
-    def is_module(self, name):
+    def check_module(self, name):
         module_dir = (self.path / 'modules' / name)
         if not module_dir.exists():
             raise FileNotFoundError(f"Module {name} not found in {self.path}")
 
         if not module_dir.is_dir():
             raise NotADirectoryError(f"Find {name}, but it is not a module")
+
+    def is_module(self, name):
+        module_dir = (self.path / 'modules' / name)
+        return (
+            module_dir.is_dir()
+        )
 
