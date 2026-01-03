@@ -34,6 +34,9 @@ class ResourceSystem:
     def mount(self, url, provider):
         return self._system.mount(url, provider)
 
+    def open(self, url, mode='r', encoding='utf-8', **query):
+        return self.get(url, **query).open(mode, encoding)
+
     def __getitem__[T](self, item: type[T]) -> TypedResourceSystem[T]:
         return TypedResourceSystem(self, item)
 
