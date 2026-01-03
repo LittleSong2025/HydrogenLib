@@ -1,0 +1,1 @@
+from .resource_type import registry_resource_type

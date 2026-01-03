@@ -1,66 +1,128 @@
+from __future__ import annotations
+
 import builtins
+import tempfile
+import typing
 from pathlib import PurePosixPath, Path
 from typing import Any
 
 from . import Resource
 from .base import ResourceProvider
-from ..system import ResourceSystem
+
+if typing.TYPE_CHECKING:
+    from ..system import CoreResourceSystem
 
 
-class HRLProvider(ResourceProvider):
-    def get(self, source, path: PurePosixPath, query: dict[str, Any],
-            resource_system: ResourceSystem) -> Resource | None:
-        source = PurePosixPath(source)
+class LocalResource(Resource):
+    def __init__(self, local_path: str | Path):
+        self.local_path = local_path
+
+    def __fspath__(self) -> str:
+        return str(self.local_path)
+
+
+class URLProvider(ResourceProvider):
+    def __init__(self, prefix):
+        self.prefix = PurePosixPath(prefix)
+
+    def fullpath(self, path):
+        return self.prefix / path
+
+    def get(self, path: PurePosixPath, query: dict[str, Any],
+            resource_system: CoreResourceSystem) -> Resource | None:
         return resource_system.get(
-            str(source / path)
+            self.fullpath(path)
         )
 
-    def list(self, source, path: PurePosixPath, query: dict[str, Any],
-             resource_system: ResourceSystem) -> builtins.list:
-        source = PurePosixPath(source)
+    def list(self, path: PurePosixPath, query: dict[str, Any],
+             resource_system: CoreResourceSystem) -> builtins.list:
         return resource_system.list(
-            str(source / path)
+            self.fullpath(path)
         )
 
-    def set(self, source, path: PurePosixPath, data: Any, query: dict[str, Any],
-            resource_system: ResourceSystem) -> None:
-        source = PurePosixPath(source)
+    def set(self, path: PurePosixPath, data: Any, query: dict[str, Any],
+            resource_system: CoreResourceSystem) -> None:
         resource_system.set(
-            str(source / path), data
+            self.fullpath(path), data
         )
 
-    def exists(self, source, path: PurePosixPath, query: dict[str, Any], resource_system: ResourceSystem) -> bool:
-        source = PurePosixPath(source)
+    def exists(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem) -> bool:
         return resource_system.exists(
-            str(source / path)
+            self.fullpath(path)
         )
 
-    def remove(self, source, path: PurePosixPath, query: dict[str, Any], resource_system: ResourceSystem) -> bool:
-        source = PurePosixPath(source)
+    def remove(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem) -> bool:
         return resource_system.remove(
-            str(source / path)
+            self.fullpath(path)
         )
 
 
 class FSProvider(ResourceProvider):
     # 拼接路径
-    def fullpath(self, source, path: PurePosixPath):
-        return Path(source) / path
+    def __init__(self, root: str | Path):
+        self.root = Path(root)
 
-    def list(self, source, path: PurePosixPath, query: dict[str, Any],
-             resource_system: ResourceSystem) -> builtins.list:
-        return list(self.fullpath(source, path).iterdir())
+    def fullpath(self, path):
+        return self.root / str(path)[1:]
+        # Fix: PurePosixPath 的根目录是 /，但是这样会导致拼接的时候被识别成盘符根目录
+        # 比如 C:/xxx/xxx/xx + /resource 会变成 C:/resource
 
-    def get(self, source, path: PurePosixPath, query: dict[str, Any],
-            resource_system: ResourceSystem) -> Resource | None:
-        pass
+    def list(self, path: PurePosixPath, query: dict[str, Any],
+             resource_system: CoreResourceSystem) -> builtins.list:
+        return list(self.fullpath(path).iterdir())
 
-    def set(self, source, path: PurePosixPath, data: Any, query: dict[str, Any],
-            resource_system: ResourceSystem) -> None:
-        pass
+    def get(self, path: PurePosixPath, query: dict[str, Any],
+            resource_system: CoreResourceSystem) -> Resource | None:
+        return LocalResource(
+            self.fullpath(path)
+        )
 
-    def exists(self, source, path: PurePosixPath, query: dict[str, Any], resource_system: ResourceSystem) -> bool:
-        pass
+    def set(self, path: PurePosixPath, data: Any, query: dict[str, Any],
+            resource_system: CoreResourceSystem) -> None:
+        if isinstance(data, str):
+            fmode = 'w'
+        elif isinstance(data, bytes | memoryview | bytearray):
+            fmode = 'wb'
+        else:
+            raise TypeError(f'unwritable data type: {type(data)!r}')
+        f = open(self.fullpath(path), fmode)
+        f.write(data)
+        f.close()
 
-    def remove(self, source, path: PurePosixPath, query: dict[str, Any], resource_system: ResourceSystem) -> bool:
-        pass
+    def exists(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem) -> bool:
+        return self.fullpath(path).exists()
+
+    def remove(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem):
+        self.fullpath(path).unlink()
+
+
+class TempProvider(ResourceProvider):
+    def __init__(self, suffix=None, prefix=None):
+        self.temp_dir_manager = tempfile.TemporaryDirectory(suffix, prefix)
+        self.temp_dir = Path(self.temp_dir_manager.name)
+
+    def list(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem) -> builtins.list:
+        return []
+
+    def get(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem) -> Resource | None:
+        return LocalResource(
+            self.temp_dir / path
+        )
+
+    def set(self, path: PurePosixPath, data: Any, query: dict[str, Any], resource_system: CoreResourceSystem) -> None:
+        raise NotImplementedError('Use the `get` function instead')
+
+    def exists(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem) -> bool:
+        return (
+                self.temp_dir / path
+        ).exists()
+
+    def remove(self, path: PurePosixPath, query: dict[str, Any], resource_system: CoreResourceSystem):
+        (self.temp_dir / path).unlink()
+
+    def close(self):
+        self.temp_dir_manager.cleanup()
+        self.temp_dir_manager = None
+
+    def __del__(self):
+        self.close()
