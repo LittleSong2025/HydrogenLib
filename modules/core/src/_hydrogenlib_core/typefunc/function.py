@@ -116,6 +116,12 @@ class Function:
     def __call__(self, *args, **kwargs):
         return self._func(*args, **kwargs)
 
+    def __setattr__(self, key, value):
+        if key not in self.__slots__:
+            setattr(self._func, key, value)
+        else:
+            super().__setattr__(key, value)
+
 
 class FunctionGroup:
     def __init__(self, funcs: typing.Iterable):
