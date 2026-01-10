@@ -1,6 +1,5 @@
 import pathlib
 
-from . import convert_to_package_name
 from .module import Module
 
 
@@ -31,6 +30,9 @@ class Project:
 
     def __init__(self, path=None):
         ...
+
+    def __fspath__(self):
+        return str(self.path)
 
     @classmethod
     def find(cls, path=None):
