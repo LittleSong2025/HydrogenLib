@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 import builtins
+import os
 import tempfile
 import typing
 from pathlib import PurePosixPath, Path
 from typing import Any
 
-from . import Resource
-from .base import ResourceProvider
+from .core.provider import Resource, ResourceProvider
 
 if typing.TYPE_CHECKING:
-    from ..system import CoreResourceSystem
+    from _hydrogenlib_resource_system.core.system import CoreResourceSystem
 
 import zipfile
 
@@ -21,6 +21,10 @@ class LocalResource(Resource):
 
     def __fspath__(self) -> str:
         return str(self.local_path)
+
+    @property
+    def size(self) -> int:
+        return os.stat(self).st_size
 
 
 class URLProvider(ResourceProvider):
@@ -65,9 +69,13 @@ class FSProvider(ResourceProvider):
         self.root = Path(root)
 
     def fullpath(self, path):
-        return self.root / str(path)[1:]
-        # Fix: PurePosixPath 的根目录是 /，但是这样会导致拼接的时候被识别成盘符根目录
-        # 比如 C:/xxx/xxx/xx + /resource 会变成 C:/resource
+        path = self.root / str(path)[1:]  # Fix for windows: PurePosixPath 的根目录是 /，但是这样会导致拼接的时候被识别成盘符根目录
+        # 比如 'C:/xxx/xxx/xx' + '/resource' 会变成 'C:/resource'
+
+        if not path.is_relative_to(self.root):  # Fix: 防止出现相对路径攻击
+            raise ValueError(f'{path} is not in {self.root}')
+
+        return path
 
     def list(self, path: PurePosixPath, query: dict[str, Any],
              resource_system: CoreResourceSystem) -> builtins.list:
@@ -98,6 +106,11 @@ class FSProvider(ResourceProvider):
         self.fullpath(path).unlink()
 
 
+class AppProvider(FSProvider):
+    def __init__(self, app_dir=None):
+        super().__init__(app_dir or Path.cwd())
+
+
 class TempProvider(ResourceProvider):
     def __init__(self, suffix=None, prefix=None):
         self.temp_dir_manager = tempfile.TemporaryDirectory(suffix, prefix)
@@ -123,8 +136,9 @@ class TempProvider(ResourceProvider):
         (self.temp_dir / path).unlink()
 
     def close(self):
-        self.temp_dir_manager.cleanup()
-        self.temp_dir_manager = None
+        if self.temp_dir_manager:
+            self.temp_dir_manager.cleanup()
+            self.temp_dir_manager = None
 
     def __del__(self):
         self.close()

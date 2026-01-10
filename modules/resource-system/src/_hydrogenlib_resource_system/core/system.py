@@ -3,7 +3,6 @@ from typing import NamedTuple
 
 from . import errors
 from .provider import ResourceProvider
-from .provider.builtin_providers import URLProvider
 from .url import parse_url, URLInfo
 
 
@@ -32,7 +31,7 @@ class CoreResourceSystem:
     def __init__(self):
         self._mounttab = {}  # type: dict[str, list[MountInfo]]
 
-    def mount(self, prefix: str, provider: ResourceProvider | type[ResourceProvider] = URLProvider):
+    def mount(self, prefix: str, provider: ResourceProvider | type[ResourceProvider]):
         URLInfo = parse_url(prefix)
         scheme, path = URLInfo.scheme, URLInfo.path
 

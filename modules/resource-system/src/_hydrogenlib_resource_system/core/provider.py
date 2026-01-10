@@ -9,6 +9,11 @@ from typing import Any
 if typing.TYPE_CHECKING:
     from _hydrogenlib_resource_system.core.system import CoreResourceSystem
 
+__all__ = [
+    'ResourceProvider',
+    'Resource',
+]
+
 
 class ResourceProvider(ABC):
     @abstractmethod
@@ -96,6 +101,10 @@ class Resource(ABC):
         """
         with self.open('rb') as f:
             return f.read()
+
+    @property
+    def size(self) -> int:
+        raise NotImplemented
 
     def __bytes__(self):
         return self.binary

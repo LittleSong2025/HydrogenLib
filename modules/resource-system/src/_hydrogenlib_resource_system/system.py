@@ -1,4 +1,5 @@
 from . import core
+from .builtin_providers import URLProvider
 
 
 class TypedResourceSystem[T]:
@@ -31,8 +32,13 @@ class ResourceSystem:
     def exists(self, url, **query):
         return self._system.exists(url, **query)
 
-    def mount(self, url, provider):
+    def mount(self, url, provider=URLProvider):
         return self._system.mount(url, provider)
+
+    def bind(self, dst, src):
+        return self._system.mount(
+            dst, URLProvider(src)
+        )
 
     def open(self, url, mode='r', encoding='utf-8', **query):
         return self.get(url, **query).open(mode, encoding)
