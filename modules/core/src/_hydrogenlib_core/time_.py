@@ -1,58 +1,31 @@
+import datetime
 import time
-from typing import Union
+from typing import NamedTuple
 
 
-class Time:
-    def __init__(self, sec):
-        self._sec = sec
-        self._hor = 0
-        self._min = 0
-        self._day = 0
+class Time(NamedTuple):
+    sec: int
+    min: int
+    hor: int
+    day: int
 
-        self.process()
+    @classmethod
+    def from_sec(cls, sec):
+        min = hor = day = 0
 
-    def process(self):
-        if self._sec >= 60:
-            _, self._sec = divmod(self._sec, 60)
-            self._min += _
-        if self._min >= 60:
-            _, self._min = divmod(self._min, 60)
-            self._hor += _
-        if self._hor >= 24:
-            _, self._hor = divmod(self._hor, 24)
-            self._day += _
+        if sec >= 60:
+            _, _sec = divmod(sec, 60)
+            min += _
+        if min >= 60:
+            _, min = divmod(min, 60)
+            hor += _
+        if hor >= 24:
+            _, hor = divmod(hor, 24)
+            day += _
 
-    @property
-    def sec(self):
-        return self._sec
-
-    @property
-    def min(self):
-        return self._min
-
-    @property
-    def hor(self):
-        return self._hor
-
-    @property
-    def day(self):
-        return self._day
-
-    @sec.setter
-    def sec(self, v):
-        self._sec = v
-
-    @min.setter
-    def min(self, v):
-        self._min = v
-
-    @hor.setter
-    def hor(self, v):
-        self._hor = v
-
-    @day.setter
-    def day(self, v):
-        self._day = v
+        return cls(
+            sec, min, hor, day
+        )
 
     @property
     def time_DHMS(self):
@@ -78,6 +51,8 @@ class Time:
 
 
 class Stopwatch:
+    __slots__ = ('start_time', 'end_time', 'elapsed_time', 'running')
+
     def __init__(self):
         self.start_time = None
         self.end_time = None
@@ -102,6 +77,8 @@ class Stopwatch:
 
 
 class IntervalRecorder:
+    __slots__ = ('_last_time', '_running')
+
     def __init__(self):
         self._last_time = None
         self._running = False
@@ -121,3 +98,16 @@ class IntervalRecorder:
     def stop(self):
         self._running = False
 
+
+class DatetimeParser:
+    __slots__ = ('_fmt',)
+
+    def __init__(self, fmt):
+        self._fmt = fmt
+
+    def parse(self, time_str):
+        return datetime.datetime.strptime(time_str, self._fmt)
+
+    @property
+    def fmt(self):
+        return self._fmt
