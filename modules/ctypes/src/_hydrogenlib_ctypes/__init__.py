@@ -1,31 +1,12 @@
 """
 Use:
     import ...
-    dll = Dll('user32')
+    user32 = Dll('user32')
 
-    @ProtoType.from_pyfunc
+    @user32
     def MessageBoxW(hwnd: int, text: str, caption: str, uType: int) -> int: ...
-
-    dll.connect(MessageBoxW)
-
 """
 
-
-from . import C
-from .C.basic_types import CallingConvention
-from .C.dll import Dll
-
-
-from .C.c_types import *
-
-from .C.compound_types import (
-    TPointer as Pointer,
-    TRef as Ref,
-    TArray as Array,
-    TStructure as Structure,
-    Structure as StructureBase,
-    TUnion as Union
-)
-
-
-
+from ._dll import DLL
+from ._func import c_function
+from ._types import *
